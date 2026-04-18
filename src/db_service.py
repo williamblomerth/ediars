@@ -12,4 +12,5 @@ except redis.ConnectionError:
 
 # listen for vector and objects, add them to DB
 
+
 # listen for queries, return images matching queries
