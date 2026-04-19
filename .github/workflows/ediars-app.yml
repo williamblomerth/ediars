@@ -1,0 +1,51 @@
+
+name: ediars Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.13"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: CSV unit test with pytest
+      run: |
+        pytest ./test/ingestor_test.py
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: memory-usage-report
+        path: mem_report.txt
+    - name: Run coverage
+      run: |
+        # see what cases are covered by tests
+        python -m coverage run -m pytest ./test/ingestor_test.py
+        python -m coverage report
+    - name: Run cProfile
+      run: |
+        # evaluate CPU usage
+        python -m cProfile ./test/ingestor_test.py
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
