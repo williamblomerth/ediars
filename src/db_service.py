@@ -9,6 +9,13 @@ port = os.getenv('REDIS_PORT')
 username = os.getenv('REDIS_USERNAME')
 password = os.getenv('REDIS_PASSWORD')
 
+BIO_MAP = {
+    "osteosarcoma": 1,
+    "medium spiny neuron": 2,
+    "protoplasmic astrocyte": 3,
+    "cerebellar basket cell": 4
+}
+
 
 def db_entry(client, filename, data):
     # unique identifier
@@ -21,7 +28,9 @@ def db_entry(client, filename, data):
 
     # add to db
     client.hset(key, mapping=data)
-    client.zadd(f"idx:{filename}", {"type": data["type"]})
+    cell_type = data.get("type", "").lower()
+    score = BIO_MAP.get(cell_type, 0)
+    client.zadd("idx:cell_types", {filename: score})
 
     print(f"successfully added {filename} to database.")
 
