@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 from pathvalidate import is_valid_filepath
+from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..')))
 import src.inference_service as inference_service
 import src.embedding_service as embedding_service
@@ -43,21 +44,11 @@ def listening(client):
 def main():
     print("--- [ welcome to ediars ] ---\n")
 
-    # get host
-    host = input("please enter host: ")
-    host = str(host)
-
-    # get port
-    port = input("please enter port: ")
-    port = int(port)
-
-    # get username
-    username = input("please enter username: ")
-    username = str(username)
-
-    # get password
-    password = input("please enter password: ")
-    password = str(password)
+    load_dotenv()
+    host = os.getenv('REDIS_HOST')
+    port = os.getenv('REDIS_PORT')
+    username = os.getenv('REDIS_USERNAME')
+    password = os.getenv('REDIS_PASSWORD')
 
     # connect to redis
     try:
@@ -71,13 +62,20 @@ def main():
     # start submodule threads
     try:
         threads = []
+
         inference = threading.Thread(target=inference_service.main, args=(host,port,password,))
+        threads.append(inference)
+
         embedding = threading.Thread(target=embedding_service.main, args=(host,port,password,))
+        threads.append(embedding)
+
         db = threading.Thread(target=db_service.main, args=(host,port,password,))
+        threads.append(db)
+
         listen = threading.Thread(target=listening, args=(client,))
-        threads.append(inference, embedding, db, listen)
-    except:
-        print("system error, try again :(")
+        threads.append(listen)
+    except Exception as e:
+        print(f"system error: {e}")
         quit()
 
     while True:
@@ -91,9 +89,6 @@ def main():
                     filename = os.path.basename(user_input.strip())
                     broadcast(client, filename)
                     print(f"ediars: image processing in progress.")
-                    continue
-                else:
-                    print("ediars: sorry, that file does not exist.")
                     continue
 
             # if user is searching for a keyword

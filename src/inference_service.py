@@ -2,6 +2,12 @@ import redis
 import sys
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
+host = os.getenv('REDIS_HOST')
+port = os.getenv('REDIS_PORT')
+username = os.getenv('REDIS_USERNAME')
+password = os.getenv('REDIS_PASSWORD')
 # "fake" implementation, true implementation out of scope for assignment
 
 # create cells "database"
@@ -15,13 +21,8 @@ cells["1132_512v"] = {"filename": "1132_512v", "modality": "confocal", "type": "
 
 
 def main(host, port, password):
-    # take in host and pw, connect to redis
-    # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..')))
-    # host = sys.argv[1]
-    # port = sys.argv[2]
-    # password = sys.argv[3]
     try:
-        client = redis.Redis(host=host, port=port, password=password, decode_responses=True)
+        client = redis.Redis(host=host, port=port, username=username, password=password, decode_responses=True)
         client.ping()
         print("inference connected to redis!")
     except redis.ConnectionError:

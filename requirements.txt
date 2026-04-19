@@ -1,4 +1,7 @@
 redis
+fakeredis
 pandas
 pathvalidate
 vtracer
+python-dotenv
+pytest

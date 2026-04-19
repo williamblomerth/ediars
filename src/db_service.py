@@ -2,6 +2,12 @@ import redis
 import sys
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
+host = os.getenv('REDIS_HOST')
+port = os.getenv('REDIS_PORT')
+username = os.getenv('REDIS_USERNAME')
+password = os.getenv('REDIS_PASSWORD')
 
 
 def db_entry(client, filename, data):
@@ -13,30 +19,17 @@ def db_entry(client, filename, data):
         print(f"error: {filename} already exists!")
         return False
 
-    # create payload
-    # use hash to store multiple attributes in one place
-    data = {
-        "name": name,
-        "price": price,
-        "stock": stock,
-        "last_updated": "2026-04-19"
-    }
-
     # add to db
     client.hset(key, mapping=data)
-    client.zadd("idx:product_price", {"laptop_001": 1999})
+    client.zadd(f"idx:{filename}", {"type": data["type"]})
 
     print(f"successfully added {filename} to database.")
 
 
 def main(host, port, password):
-    # take in host and pw, connect to redis
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..')))
-    host = sys.argv[1]
-    port = sys.argv[2]
-    password = sys.argv[3]
+
     try:
-        client = redis.Redis(host=host, port=port, password=password, decode_responses=True)
+        client = redis.Redis(host=host, port=port, username=username, password=password, decode_responses=True)
         client.ping()
         print("db connected to redis!")
     except redis.ConnectionError:
@@ -60,5 +53,5 @@ def main(host, port, password):
             elif channel == 'search':
                 print(f"search received: {message['data']}")
                 # search db for filenames with objects matching search
-                results = client.zrangebyscore("idx:type", message['data'])
+                results = client.zrangebyscore("filename:type", message['data'])
                 client.publish('results', results)
